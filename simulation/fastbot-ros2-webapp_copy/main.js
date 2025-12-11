@@ -3,6 +3,7 @@ let vueApp = new Vue({
     data: {
         // ros connection
         ros: null,
+        cmdVelTopic: null,
         loading: false,
         rosbridge_address: '',
         connected: false,
@@ -62,6 +63,14 @@ let vueApp = new Vue({
                 this.connected = true
                 this.loading = false
                 this.setup3DViewer()
+
+                // CREATE AND ADVERTISE ONCE
+                this.cmdVelTopic = new ROSLIB.Topic({
+                    ros: this.ros,
+                    name: '/fastbot/cmd_vel',
+                    messageType: 'geometry_msgs/msg/Twist'
+                });
+                this.cmdVelTopic.advertise();
 
                 // Subscribe to odometry
                 let odomTopic = new ROSLIB.Topic({
@@ -165,25 +174,18 @@ let vueApp = new Vue({
         },
 
         publish: function () {
-            let topic = new ROSLIB.Topic({
-                ros: this.ros,
-                name: '/fastbot/cmd_vel',
-                messageType: 'geometry_msgs/Twist'
-            })
-            let message = new ROSLIB.Message({
-                linear: { x: this.joystick.vertical, y: 0, z: 0, },
-                angular: { x: 0, y: 0, z: this.joystick.horizontal, },
-            })
-            if (this.joystick.vertical > 0.0 || this.joystick.horizontal > 0.0) {
-                console.log("OH YEAHHHHHh")
-            }
-            topic.publish(message)
+            if (!this.cmdVelTopic) return;  // safety check
+
+            this.cmdVelTopic.publish(new ROSLIB.Message({
+                linear: { x: this.joystick.vertical, y: 0, z: 0 },
+                angular: { x: 0, y: 0, z: this.joystick.horizontal }
+            }));
         },
         sendCommand: function () {
             let topic = new ROSLIB.Topic({
                 ros: this.ros,
                 name: '/fastbot/cmd_vel',
-                messageType: 'geometry_msgs/Twist'
+                messageType: 'geometry_msgs/msg/Twist'
             })
             let message = new ROSLIB.Message({
                 linear: { x: 0.2, y: 0, z: 0, },
@@ -195,7 +197,7 @@ let vueApp = new Vue({
             let topic = new ROSLIB.Topic({
                 ros: this.ros,
                 name: '/fastbot/cmd_vel',
-                messageType: 'geometry_msgs/Twist'
+                messageType: 'geometry_msgs/msg/Twist'
             })
             let message = new ROSLIB.Message({
                 linear: { x: 0.2, y: 0, z: 0, },
@@ -207,7 +209,7 @@ let vueApp = new Vue({
             let topic = new ROSLIB.Topic({
                 ros: this.ros,
                 name: '/fastbot/cmd_vel',
-                messageType: 'geometry_msgs/Twist'
+                messageType: 'geometry_msgs/msg/Twist'
             })
             let message = new ROSLIB.Message({
                 linear: { x: 0, y: 0, z: 0, },

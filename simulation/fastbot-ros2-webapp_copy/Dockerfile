@@ -26,5 +26,7 @@ RUN /bin/bash -c "source /opt/ros/humble/setup.bash \
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc \
     && echo "source /home/catkin_ws/install/setup.bash" >> ~/.bashrc
 
+ENV ROS_DOMAIN_ID 1
+
 # /bin/bash is the command we want to execute when running a docker container
 ENTRYPOINT ["/bin/bash", "-i", "-c", "cd /home/catkin_ws/src/simulation/ && exec bash"]

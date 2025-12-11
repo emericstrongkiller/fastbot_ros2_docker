@@ -10,10 +10,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install Git & other things
 RUN apt-get update && apt-get install -y \
     git \
-	ros-humble-gazebo-ros-pkgs
+    ros-humble-cartographer-ros
 
-COPY ./fastbot/fastbot_description /home/catkin_ws/src/fastbot_description
-COPY ./fastbot/fastbot_gazebo /home/catkin_ws/src/fastbot_gazebo
+COPY ./fastbot /home/catkin_ws/src/fastbot
+#COPY ./fastbot/fastbot_description /home/catkin_ws/src/fastbot_description
+#COPY ./fastbot/fastbot_gazebo /home/catkin_ws/src/fastbot_gazebo
 
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash \
     && cd /home/catkin_ws \
