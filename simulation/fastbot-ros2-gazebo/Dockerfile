@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y \
     git \
 	ros-humble-gazebo-ros-pkgs
 
-COPY ./fastbot/fastbot_description /home/catkin_ws/src/fastbot_description
-COPY ./fastbot/fastbot_gazebo /home/catkin_ws/src/fastbot_gazebo
+COPY ./fastbot_description /home/catkin_ws/src/fastbot_description
+COPY ./fastbot_gazebo /home/catkin_ws/src/fastbot_gazebo
 
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash \
     && cd /home/catkin_ws \
@@ -27,4 +27,4 @@ RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc \
 ENV ROS_DOMAIN_ID 1
 
 # /bin/bash is the command we want to execute when running a docker container
-ENTRYPOINT ["/bin/bash", "-i", "-c", "cd /home/catkin_ws/src/simulation/ && exec bash"]
+ENTRYPOINT ["/bin/bash", "-i", "-c", "ros2 launch fastbot_gazebo one_fastbot_room.launch.py"]

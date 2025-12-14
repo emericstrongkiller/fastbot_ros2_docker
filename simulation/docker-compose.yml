@@ -1,0 +1,42 @@
+version: "3.7"
+
+services:
+  fastbot_gazebo:
+    image: emericstrongkiller/emericstrongkiller-cp22:fastbot-ros2-gazebo
+    container_name: fastbot-ros2-gazebo
+    hostname: fastbot_gz_container
+    restart: "no"
+    volumes:
+      - /tmp/.X11-unix/:/tmp/.X11-unix/
+    environment:
+      - DISPLAY
+    networks:
+      - fastbot_net
+
+  fastbot_slam:
+    image: emericstrongkiller/emericstrongkiller-cp22:fastbot-ros2-slam
+    container_name: fastbot-ros2-slam
+    hostname: fastbot_slam_container
+    restart: "no"
+    volumes:
+      - /tmp/.X11-unix/:/tmp/.X11-unix/
+    environment:
+      - DISPLAY
+    networks:
+      - fastbot_net
+
+  fastbot_webapp:
+    image: emericstrongkiller/emericstrongkiller-cp22:fastbot-ros2-webapp
+    container_name: fastbot-ros2-webapp
+    hostname: fastbot_webapp_container
+    restart: "no"
+    volumes:
+      - /home/user/ros2_ws/src/fastbot_ros2_docker/simulation/fastbot-ros2-webapp:/home/catkin_ws/src/simulation
+    networks:
+      - fastbot_net
+    ports:
+      - 7000:7000
+      - 9090:9090
+
+networks:
+  fastbot_net:

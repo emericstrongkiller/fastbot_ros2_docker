@@ -1,0 +1,254 @@
+<html>
+
+<head>
+    <title>Fastbot Web interface for CP21 !</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
+    <!-- ROS stuff -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/easeljs/lib/easeljs.min.js"></script>
+    <script src="./libs/roslib.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/ros2d/build/ros2d.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/eventemitter2@5.0.1/lib/eventemitter2.min.js"></script>
+    <!-- Vuejs -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+    <!-- Map stuff -->
+    <script type="text/javascript" src="ros2d.js"></script>
+    <!-- 3D visualization -->
+    <script src="./libs/three.min.js"></script>
+    <script src="./libs/ColladaLoader.js"></script>
+    <script src="./libs/ColladaLoader2.js"></script>
+    <script src="./libs/STLLoader.js"></script>
+    <script src="./libs/ros3d.min.js"></script>
+    <script type="text/javascript" src="mjpegcanvas.min.js"></script>
+
+    <style type="text/css">
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            flex: 0 0 auto;
+        }
+
+        main {
+            flex: 1 1 auto;
+            overflow: hidden;
+            /* no body scroll */
+        }
+
+        /* Inner scroll area if needed */
+        #vueApp>.container {
+            height: 100%;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+            overflow: auto;
+        }
+
+        footer {
+            flex: 0 0 auto;
+            padding: 0.25rem 0;
+        }
+
+        .card {
+            margin-bottom: 0.5rem;
+        }
+
+        #dragstartzone {
+            position: relative;
+            display: inline-block;
+            width: 150px;
+            height: 150px;
+            border: 1px solid #333;
+            border-radius: 50%;
+            z-index: 10;
+            -moz-user-select: -moz-none;
+            -khtml-user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #dragCircle {
+            position: absolute;
+            z-index: 9;
+            border: 1px solid transparent;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.3);
+            -moz-user-select: -moz-none;
+            -khtml-user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #dragCircle:hover {
+            background-color: lightcoral;
+        }
+
+        /* Slightly shrink viewers to help fit */
+        #divCamera,
+        #div3DViewer,
+        #map {
+            max-height: 370px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- header of the page -->
+    <header class="header">
+        <div class="container-fluid px-0">
+            <div class="text-center py-2 bg-dark text-white">
+                <h5 class="mb-1">Fastbot Web Interface !</h5>
+                <small>Control a simulated fastbot through its environment</small>
+            </div>
+        </div>
+    </header>
+
+    <!-- main content -->
+    <main id="vueApp">
+        <div class="container">
+            <div class="row">
+                <!-- Connection Panel -->
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-body py-2">
+                            <h6>{{ menu_title }}</h6>
+                            <hr />
+                            <label>ROSBridge address</label>
+                            <input type="text" v-model="rosbridge_address" class="form-control form-control-sm" />
+                            <button class="mt-2 btn btn-success btn-sm" v-if="connected" @click="disconnect">
+                                Connected!
+                            </button>
+                            <button class="mt-2 btn btn-primary btn-sm" v-else @click="connect">
+                                Connect!
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fastbot Infos -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body py-2">
+                            <h6 class="text-center mb-2">{{ main_title }}</h6>
+                            <hr class="my-2" />
+
+                            <div class="row">
+                                <!-- Position / orientation (left) -->
+                                <div class="col-6">
+                                    <p class="mb-1"><strong>Position</strong></p>
+                                    <p class="mb-1">X: {{ position.x.toFixed(2) }}</p>
+                                    <p class="mb-1">Y: {{ position.y.toFixed(2) }}</p>
+                                    <p class="mb-1">Z: {{ position.z.toFixed(2) }}</p>
+                                    <p class="mb-1">
+                                        orientation (rad): {{ orientation.toFixed(2) }}
+                                    </p>
+                                </div>
+
+                                <!-- Speeds (right) -->
+                                <div class="col-6">
+                                    <p class="mb-1"><strong>Speeds</strong></p>
+                                    <p class="mb-1">
+                                        Linear_x: {{ speeds.linear_x.toFixed(3) }}
+                                    </p>
+                                    <p class="mb-1">
+                                        Linear_y: {{ speeds.linear_y.toFixed(3) }}
+                                    </p>
+                                    <p class="mb-1">
+                                        angular_z: {{ speeds.angular_z.toFixed(3) }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Joystick -->
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body text-center py-2">
+                            <h6 class="text-center mb-2">Joystick</h6>
+                            <hr class="my-2" />
+                            <p class="mb-1">Manual Control</p>
+                            <div id="dragstartzone" @mousedown="startDrag" @mousemove="doDrag"></div>
+                            <div id="dragCircle" :style="dragCircleStyle"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Goal buttons -->
+                <div class="col-md-3 mb-2">
+                    <div class="card h-100">
+                        <div class="card-body py-2">
+                            <h6>Fastbot Goals</h6>
+                            <button class="mt-1 btn btn-primary btn-sm" @click="living_room_goal_publish">
+                                Living room
+                            </button>
+                            <br />
+                            <button class="mt-1 btn btn-primary btn-sm" @click="kitchen_goal_publish">
+                                Kitchen
+                            </button>
+                            <br />
+                            <button class="mt-1 btn btn-primary btn-sm" @click="sofa_goal_publish">
+                                Sofa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Second row: camera + 3D + goals + map -->
+            <div class="row">
+                <!-- Camera -->
+                <div class="col-md-3 mb-2">
+                    <div class="card h-70">
+                        <div class="card-body py-2">
+                            <h6>Camera</h6>
+                            <div id="divCamera"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D Viewer -->
+                <div class="col-md-4 mb-2">
+                    <div class="card h-70">
+                        <div class="card-body py-2">
+                            <h6>3D Viewer</h6>
+                            <div id="div3DViewer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map -->
+                <div class="col-md-5 mb-5">
+                    <div class="card">
+                        <div class="card-body py-2">
+                            <h6>Map</h6>
+                            <div id="map"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- footer -->
+    <footer class="footer bg-dark text-light text-center">
+        <div class="container">
+            <small>page ends here!</small>
+        </div>
+    </footer>
+
+    <script type="text/javascript">
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = 'main.js?v=5.' + Date.now();
+        document.head.appendChild(script);
+    </script>
+</body>
+
+</html>
