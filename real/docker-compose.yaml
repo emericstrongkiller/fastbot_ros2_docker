@@ -1,0 +1,16 @@
+version: '3'
+services:
+  fastbot-ros2-real:
+    image: emericstrongkiller/emericstrongkiller-cp22:fastbot-ros2-real
+    container_name: fastbot-ros2-real
+    network_mode: host
+    privileged: true
+    restart: always
+    volumes:
+      - /dev:/dev
+      
+  fastbot-ros2-slam-real:
+    image: emericstrongkiller/emericstrongkiller-cp22:fastbot-ros2-slam-real
+    container_name: fastbot-ros2-slam-real
+    network_mode: host
+    restart: always

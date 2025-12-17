@@ -1,0 +1,21 @@
+FROM arm64v8/ros:humble
+
+RUN apt-get update && apt-get install -y \
+    ros-humble-cartographer \
+    ros-humble-cartographer-ros \
+    python3-colcon-common-extensions \
+    ros-humble-rmw-cyclonedds-cpp \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /ros2_ws/src
+COPY ./src/fastbot/fastbot_slam /ros2_ws/src/fastbot_slam
+COPY cyclonedds_husarnet.xml /var/lib/theconstruct.rrl/cyclonedds_husarnet.xml
+
+RUN /bin/bash -c "source /opt/ros/humble/setup.bash && cd /ros2_ws && colcon build --packages-select fastbot_slam"
+
+# ENVs
+ENV ROS_DOMAIN_ID=0
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+ENV CYCLONEDDS_URI=file:///var/lib/theconstruct.rrl/cyclonedds_husarnet.xml
+
+ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch fastbot_slam cartographer_real.launch.py"]

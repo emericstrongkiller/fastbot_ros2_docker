@@ -1,5 +1,5 @@
 # Start from ROS base image
-FROM osrf/ros:humble-desktop-full
+FROM arm64v8/ros:humble
 
 # Make a catkin workspace
 RUN mkdir -p /home/catkin_ws/src/simulation
